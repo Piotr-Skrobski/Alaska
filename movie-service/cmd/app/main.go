@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Piotr-Skrobski/Alaska/movie-service/internal/models"
+	"github.com/Piotr-Skrobski/Alaska/movie-service/internal/repositories"
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -51,6 +53,9 @@ func main() {
 	// Emojis should not be in code but since I *can*, I *will*.
 	log.Println("✅ Connected to MongoDB")
 
+	repository := repositories.NewMovieRepository(mongoClient.Database("movies_db"))
+	repository.Create(generateSampleMovie())
+
 	mqConn, err := amqp.Dial(cfg.RabbitURI)
 	if err != nil {
 		log.Fatalf("failed to connect to RabbitMQ: %v\n", err)
@@ -70,5 +75,30 @@ func main() {
 	log.Printf("🚀 Starting server on %s...", addr)
 	if err := http.ListenAndServe(addr, r); err != nil {
 		log.Fatalf("Server failed: %v\n", err)
+	}
+
+}
+
+func generateSampleMovie() models.Movie {
+	return models.Movie{
+		Title:      "The Shawshank Redemption",
+		Year:       "1994",
+		Genre:      "Drama",
+		Director:   "Frank Darabont",
+		Writer:     "Stephen King, Frank Darabont",
+		Actors:     []string{"Tim Robbins", "Morgan Freeman", "Bob Gunton"},
+		Plot:       "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
+		Language:   "English",
+		Country:    "USA",
+		PosterURL:  "https://m.media-amazon.com/images/M/MV5BMDFkYTc0MGEtZmNhMC00ZDIzLWFmNTEtODM1ZmRlYWMwMWFmXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_SX300.jpg",
+		IMDbRating: 9.3,
+		Runtime:    "142 min",
+		BoxOffice: models.BoxOffice{
+			Value:    28341469,
+			Currency: "USD",
+		},
+		Awards:    "Nominated for 7 Oscars. Another 21 wins & 36 nominations.",
+		Metascore: "80",
+		IMDbID:    "tt0111161",
 	}
 }
