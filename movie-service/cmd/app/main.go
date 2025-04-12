@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/Piotr-Skrobski/Alaska/movie-service/internal/models"
 	"github.com/Piotr-Skrobski/Alaska/movie-service/internal/repositories"
+	"github.com/Piotr-Skrobski/Alaska/movie-service/internal/services"
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -56,6 +58,9 @@ func main() {
 	repository := repositories.NewMovieRepository(mongoClient.Database("movies_db"))
 	repository.Create(generateSampleMovie())
 
+	omdbService := services.NewOMDbService(cfg.OmdbAPIKey)
+	movieService := services.NewMovieService(repository, omdbService)
+
 	mqConn, err := amqp.Dial(cfg.RabbitURI)
 	if err != nil {
 		log.Fatalf("failed to connect to RabbitMQ: %v\n", err)
@@ -66,9 +71,28 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	r.Get("/movies/{title}", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/movies/title/{title}", func(w http.ResponseWriter, r *http.Request) {
 		title := chi.URLParam(r, "title")
-		fmt.Fprintf(w, "Movie requested: %s\n", title)
+		movie, err := movieService.GetMovieByTitle(title)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Error fetching movie: %v", err), http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(movie)
+	})
+
+	r.Get("/movies/imdb/{id}", func(w http.ResponseWriter, r *http.Request) {
+		imdbID := chi.URLParam(r, "id")
+		movie, err := movieService.GetMovieByIMDbID(imdbID)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Error fetching movie: %v", err), http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(movie)
 	})
 
 	addr := ":" + cfg.Port
