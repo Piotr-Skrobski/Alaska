@@ -122,6 +122,7 @@ services:
     environment:
       - MONGO_URI=${MONGO_URI:-mongodb://mongouser:mongopassword@mongodb:27017/mydatabase?authSource=admin}
       - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
+      - OMDB_API_KEY=${OMDB_API_KEY:-KEY_GOES_HERE}
     depends_on:
       - mongodb
       - rabbitmq
