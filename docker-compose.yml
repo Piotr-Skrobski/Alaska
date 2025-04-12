@@ -10,8 +10,8 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
       - rabbitmq_logs:/var/log/rabbitmq
     environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-admin}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-password}
     restart: unless-stopped
     networks:
       - alaska_network
@@ -52,7 +52,7 @@ services:
     environment:
       - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_USER:-mongouser}
       - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_PASSWORD:-mongopassword}
-      - ME_CONFIG_MONGODB_SERVER=mongleleleodb
+      - ME_CONFIG_MONGODB_SERVER=mongodb
       - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
       - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-password}
       - ME_CONFIG_SITE_SSL_ENABLED=false
@@ -111,6 +111,23 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  movie-service:
+    build:
+      context: ./movie-service
+      dockerfile: Dockerfile
+    container_name: movie-service
+    ports:
+      - "${MOVIE_SERVICE_PORT:-10002}:10002"
+    environment:
+      - MONGO_URI=${MONGO_URI:-mongodb://mongouser:mongopassword@mongodb:27017/mydatabase?authSource=admin}
+      - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - alaska_network
+    restart: unless-stopped
 
 networks:
   alaska_network:
