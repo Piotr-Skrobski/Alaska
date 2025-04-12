@@ -14,12 +14,111 @@ services:
       - RABBITMQ_DEFAULT_PASS=password
     restart: unless-stopped
     networks:
-      - rabbitmq_network
+      - alaska_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-mongouser}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-mongopassword}
+      - MONGO_INITDB_DATABASE=${MONGO_DATABASE:-mydatabase}
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    command: [--auth, --wiredTigerCacheSizeGB, "1", --bind_ip_all]
+    networks:
+      - alaska_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: unless-stopped
+    ports:
+      - "27018:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_USER:-mongouser}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_PASSWORD:-mongopassword}
+      - ME_CONFIG_MONGODB_SERVER=mongleleleodb
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-password}
+      - ME_CONFIG_SITE_SSL_ENABLED=false
+      - ME_CONFIG_MONGODB_SSL=false
+    depends_on:
+      - mongodb
+    networks:
+      - alaska_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-pguser}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pgpassword}
+      - POSTGRES_DB=${POSTGRES_DB:-pgdatabase}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    command: postgres -c ssl=on -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+    networks:
+      - alaska_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: unless-stopped
+    ports:
+      - "5433:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@example.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-pgadminpassword}
+      - PGADMIN_CONFIG_SERVER_MODE=True
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - alaska_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
-  rabbitmq_network:
+  alaska_network:
     driver: bridge
 
 volumes:
   rabbitmq_data:
   rabbitmq_logs:
+  mongodb_data:
+  postgres_data:
+  pgadmin_data:
