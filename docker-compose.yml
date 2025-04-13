@@ -138,7 +138,7 @@ services:
     ports:
       - "${USER_SERVICE_PORT:-10003}:10002"
     environment:
-      - POSTGRES_URL=${POSTGRES_URL:-DEF_URL}
+      - POSTGRES_URI=${POSTGRES_URL:-postgresql://pguser:pgpassword@postgres:5432/pgdatabase}
       - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
       - JWT_SECRET=${JWT_SECRET}
       - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID:-DISCORD_ID_HERE}
