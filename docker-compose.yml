@@ -112,6 +112,23 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
+    restart: unless-stopped
+    networks:
+      - alaska_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   movie-service:
     build:
       context: ./movie-service
@@ -141,11 +158,13 @@ services:
       - POSTGRES_URI=${POSTGRES_URL:-postgresql://pguser:pgpassword@postgres:5432/pgdatabase}
       - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
       - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URI=${REDIS_URI:-redis://:redispassword@redis:6379/0}
       - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID:-DISCORD_ID_HERE}
       - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET:-SECRET_HERE}
     depends_on:
       - postgres
       - rabbitmq
+      - redis
     networks:
       - alaska_network
     restart: unless-stopped
@@ -160,3 +179,4 @@ volumes:
   mongodb_data:
   postgres_data:
   pgadmin_data:
+  redis_data:
