@@ -4,7 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"net/http"
 
+	"github.com/Piotr-Skrobski/Alaska/user-service/internal/controllers"
+	"github.com/Piotr-Skrobski/Alaska/user-service/internal/repositories"
+	router "github.com/Piotr-Skrobski/Alaska/user-service/internal/routers"
+	"github.com/Piotr-Skrobski/Alaska/user-service/internal/services"
 	"github.com/Piotr-Skrobski/Alaska/user-service/internal/utils"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/lib/pq"
@@ -31,6 +36,10 @@ func main() {
 		log.Fatalf("failed to connect to PostgreSQL at ping stage: %v\n", err)
 	}
 	log.Println("✅ Connected to PostgreSQL")
+	if err := repositories.MigrateUserTable(postgresDb); err != nil {
+		log.Fatalf("database migration failed: %v\n", err)
+	}
+	log.Println("✅ User table migrated (or already exists)")
 
 	opt, err := redis.ParseURL(cfg.RedisURI)
 	if err != nil {
@@ -43,5 +52,17 @@ func main() {
 	}
 	defer redisClient.Close()
 	log.Println("✅ Connected to Redis")
+
+	userRepo := repositories.NewUserRepository(postgresDb)
+	sessionService := services.NewSessionService(redisClient)
+	userController := controllers.NewUserController(userRepo, sessionService)
+
+	r := router.NewRouter(userController)
+
+	addr := ":" + cfg.Port
+	log.Printf("🚀 Starting server on %s...", addr)
+	if err := http.ListenAndServe(addr, r); err != nil {
+		log.Fatalf("Server failed: %v\n", err)
+	}
 
 }
