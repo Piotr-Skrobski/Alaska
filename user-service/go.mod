@@ -4,11 +4,14 @@ go 1.24.1
 
 require (
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dghubble/oauth1 v0.7.3 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-oauth2/oauth2/v4 v4.5.3 // indirect
 	github.com/go-pkgz/auth/v2 v2.0.0 // indirect
 	github.com/go-pkgz/repeater v1.2.0 // indirect
 	github.com/go-pkgz/rest v1.20.3 // indirect
+	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v1.0.0 // indirect

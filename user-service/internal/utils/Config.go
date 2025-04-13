@@ -7,6 +7,7 @@ import (
 type Config struct {
 	PostgresURI         string
 	RabbitURI           string
+	RedisURI            string
 	JWTSecret           string
 	DiscordClientID     string
 	DiscordClientSecret string
@@ -17,6 +18,7 @@ func LoadConfig() Config {
 	return Config{
 		PostgresURI:         getEnv("POSTGRES_URI", "postgres://user:pass@localhost:5432/dbname?sslmode=disable"),
 		RabbitURI:           getEnv("RABBITMQ_URI", "amqp://admin:password@localhost:5672/"),
+		RedisURI:            getEnv("REDIS_URI", "TODO"),
 		JWTSecret:           getEnv("JWT_SECRET", "dev-secret"),
 		DiscordClientID:     getEnv("DISCORD_CLIENT_ID", "DISCORD_ID_HERE"),
 		DiscordClientSecret: getEnv("DISCORD_CLIENT_SECRET", "SECRET_HERE"),
