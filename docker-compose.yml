@@ -130,6 +130,26 @@ services:
       - alaska_network
     restart: unless-stopped
 
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "${USER_SERVICE_PORT:-10003}:10002"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL:-DEF_URL}
+      - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
+      - JWT_SECRET=${JWT_SECRET}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID:-DISCORD_ID_HERE}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET:-SECRET_HERE}
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - alaska_network
+    restart: unless-stopped
+
 networks:
   alaska_network:
     driver: bridge
