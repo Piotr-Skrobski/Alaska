@@ -147,8 +147,8 @@ services:
 
   movie-service:
     build:
-      context: ./movie-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: movie-service/Dockerfile
     container_name: movie-service
     ports:
       - "${MOVIE_SERVICE_PORT:-10002}:10002"
@@ -165,8 +165,8 @@ services:
 
   user-service:
     build:
-      context: ./user-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: user-service/Dockerfile
     container_name: user-service
     ports:
       - "${USER_SERVICE_PORT:-10003}:10002"
@@ -187,8 +187,8 @@ services:
 
   review-service:
     build:
-      context: ./review-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: review-service/Dockerfile
     container_name: review-service
     ports:
       - "${REVIEW_SERVICE_PORT:-10004}:10002"

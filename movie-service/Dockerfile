@@ -4,9 +4,11 @@ ENV CGO_ENABLED=0 \
   GOOS=linux \
   GOARCH=amd64
 WORKDIR /app
-COPY go.mod go.sum ./
+COPY ./movie-service/go.mod ./go.mod
+COPY ./movie-service/go.sum ./go.sum
+COPY ./shared-events ./shared-events
 RUN go mod download
-COPY . .
+COPY ./movie-service/. ./
 RUN go build -o movie-service ./cmd/app
 
 # Run

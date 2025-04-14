@@ -4,9 +4,11 @@ ENV CGO_ENABLED=0 \
   GOOS=linux \
   GOARCH=amd64
 WORKDIR /app
-COPY go.mod go.sum ./
+COPY ./review-service/go.mod ./go.mod
+COPY ./review-service/go.sum ./go.sum
+COPY ./shared-events ./shared-events
 RUN go mod download
-COPY . .
+COPY ./review-service/. ./
 RUN go build -o review-service ./cmd/app
 
 # Run
