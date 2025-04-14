@@ -25,13 +25,13 @@ func NewUserController(userRepo *repositories.UserRepository, sessionService *se
 }
 
 func (uc *UserController) RegisterRoutes(r chi.Router) {
-	r.Post("/register", uc.Register)
-	r.Post("/login", uc.Login)
+	r.Post("/users/register", uc.Register)
+	r.Post("/users/login", uc.Login)
 
 	r.Group(func(r chi.Router) {
 		r.Use(uc.AuthMiddleware)
-		r.Get("/me", uc.Me)
-		r.Post("/logout", uc.Logout)
+		r.Get("/users/me", uc.Me)
+		r.Post("/users/logout", uc.Logout)
 	})
 }
 
