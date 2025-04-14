@@ -185,6 +185,23 @@ services:
       - alaska_network
     restart: unless-stopped
 
+  review-service:
+    build:
+      context: ./review-service
+      dockerfile: Dockerfile
+    container_name: review-service
+    ports:
+      - "${REVIEW_SERVICE_PORT:-10004}:10002"
+    environment:
+      - POSTGRES_URI=${POSTGRES_URL:-postgresql://pguser:pgpassword@postgres:5432/pgdatabase}
+      - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - alaska_network
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
