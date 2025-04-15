@@ -6,22 +6,16 @@ import (
 	"net/http"
 
 	"github.com/Piotr-Skrobski/Alaska/user-service/internal/dtos"
-	"github.com/Piotr-Skrobski/Alaska/user-service/internal/models"
-	"github.com/Piotr-Skrobski/Alaska/user-service/internal/repositories"
 	"github.com/Piotr-Skrobski/Alaska/user-service/internal/services"
 	"github.com/go-chi/chi/v5"
 )
 
 type UserController struct {
-	UserRepo       *repositories.UserRepository
-	SessionService *services.SessionService
+	UserService *services.UserService
 }
 
-func NewUserController(userRepo *repositories.UserRepository, sessionService *services.SessionService) *UserController {
-	return &UserController{
-		UserRepo:       userRepo,
-		SessionService: sessionService,
-	}
+func NewUserController(userService *services.UserService) *UserController {
+	return &UserController{UserService: userService}
 }
 
 func (uc *UserController) RegisterRoutes(r chi.Router) {
@@ -42,13 +36,7 @@ func (uc *UserController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := &models.User{
-		Email:    req.Email,
-		Password: req.Password,
-		Username: req.Username,
-	}
-
-	if err := uc.UserRepo.CreateUser(user); err != nil {
+	if err := uc.UserService.Register(r.Context(), req); err != nil {
 		http.Error(w, "failed to create user", http.StatusInternalServerError)
 		return
 	}
@@ -63,29 +51,13 @@ func (uc *UserController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := uc.UserRepo.GetUserByEmail(req.Email)
+	resp, err := uc.UserService.Login(r.Context(), req)
 	if err != nil {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	if !uc.UserRepo.VerifyPassword(user, req.Password) {
-		http.Error(w, "invalid credentials", http.StatusUnauthorized)
-		return
-	}
-
-	token, err := uc.SessionService.CreateSession(context.Background(), user)
-	if err != nil {
-		http.Error(w, "failed to create session", http.StatusInternalServerError)
-		return
-	}
-
-	uc.SessionService.SetSessionCookie(w, token)
-
-	resp := dtos.AuthResponse{
-		Token: token,
-		User:  *user,
-	}
+	uc.UserService.SessionService.SetSessionCookie(w, resp.Token)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
@@ -98,7 +70,7 @@ func (uc *UserController) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := uc.SessionService.GetSession(context.Background(), cookie.Value)
+	session, err := uc.UserService.GetSession(r.Context(), cookie.Value)
 	if err != nil {
 		http.Error(w, "invalid session", http.StatusUnauthorized)
 		return
@@ -115,8 +87,8 @@ func (uc *UserController) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uc.SessionService.DeleteSession(context.Background(), cookie.Value)
-	uc.SessionService.ClearSessionCookie(w)
+	uc.UserService.Logout(r.Context(), cookie.Value)
+	uc.UserService.SessionService.ClearSessionCookie(w)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -129,7 +101,7 @@ func (uc *UserController) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		_, err = uc.SessionService.GetSession(context.Background(), cookie.Value)
+		_, err = uc.UserService.GetSession(context.Background(), cookie.Value)
 		if err != nil {
 			http.Error(w, "invalid session", http.StatusUnauthorized)
 			return

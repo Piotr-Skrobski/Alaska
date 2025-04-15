@@ -55,7 +55,8 @@ func main() {
 
 	userRepo := repositories.NewUserRepository(postgresDb)
 	sessionService := services.NewSessionService(redisClient)
-	userController := controllers.NewUserController(userRepo, sessionService)
+	userService := services.NewUserService(userRepo, sessionService)
+	userController := controllers.NewUserController(userService)
 
 	r := router.NewRouter(userController)
 

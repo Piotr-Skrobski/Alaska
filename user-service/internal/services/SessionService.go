@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Piotr-Skrobski/Alaska/user-service/internal/dtos"
 	"github.com/Piotr-Skrobski/Alaska/user-service/internal/models"
 	"github.com/go-redis/redis/v8"
 	"golang.org/x/net/context"
@@ -59,7 +60,7 @@ func (s *SessionService) CreateSession(ctx context.Context, user *models.User) (
 	return token, nil
 }
 
-func (s *SessionService) GetSession(ctx context.Context, token string) (map[string]string, error) {
+func (s *SessionService) GetSession(ctx context.Context, token string) (*dtos.Session, error) {
 	sessionData, err := s.redisClient.HGetAll(ctx, "session:"+token).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
@@ -69,7 +70,24 @@ func (s *SessionService) GetSession(ctx context.Context, token string) (map[stri
 		return nil, fmt.Errorf("session not found")
 	}
 
-	return sessionData, nil
+	createdAt, err := time.Parse(time.RFC3339, sessionData["created_at"])
+	if err != nil {
+		return nil, fmt.Errorf("invalid created_at format: %w", err)
+	}
+
+	expiresAt, err := time.Parse(time.RFC3339, sessionData["expires_at"])
+	if err != nil {
+		return nil, fmt.Errorf("invalid expires_at format: %w", err)
+	}
+
+	session := &dtos.Session{
+		Token:     sessionData["token"],
+		UserID:    sessionData["user_id"],
+		CreatedAt: createdAt,
+		ExpiresAt: expiresAt,
+	}
+
+	return session, nil
 }
 
 func (s *SessionService) DeleteSession(ctx context.Context, token string) error {

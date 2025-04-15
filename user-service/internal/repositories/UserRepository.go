@@ -46,6 +46,14 @@ func (r *UserRepository) CreateUser(user *models.User) error {
 	return nil
 }
 
+func (r *UserRepository) SoftDeleteUser(id int64) error {
+	query := `UPDATE users SET deleted_at = $1, updated_at = $1 WHERE id = $2`
+	now := time.Now()
+
+	_, err := r.db.Exec(query, now, id)
+	return err
+}
+
 func (r *UserRepository) GetUserByEmail(email string) (*models.User, error) {
 	query := `SELECT id, email, password, username, created_at, updated_at 
               FROM users WHERE email = $1`

@@ -13,7 +13,8 @@ func MigrateUserTable(db *sql.DB) error {
 		password TEXT NOT NULL,
 		username TEXT NOT NULL UNIQUE,
 		created_at TIMESTAMP NOT NULL,
-		updated_at TIMESTAMP NOT NULL
+		updated_at TIMESTAMP NOT NULL,
+		deleted_at TIMESTAMP NULL
 	);`
 
 	_, err := db.Exec(query)
