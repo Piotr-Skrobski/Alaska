@@ -7,7 +7,7 @@ import (
 
 func MigrateReviewTable(db *sql.DB) error {
 	query := `
-		CREATE TABLE reviews (
+		CREATE TABLE IF NOT EXISTS reviews (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     movie_id INTEGER NOT NULL,
