@@ -15,11 +15,18 @@ services:
     restart: unless-stopped
     networks:
       - alaska_network
+      - message_broker_network
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   mongodb:
     image: mongo:latest
@@ -37,11 +44,18 @@ services:
     command: [--auth, --wiredTigerCacheSizeGB, "1", --bind_ip_all]
     networks:
       - alaska_network
+      - mongodb_network
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   mongo-express:
     image: mongo-express:latest
@@ -58,9 +72,12 @@ services:
       - ME_CONFIG_SITE_SSL_ENABLED=false
       - ME_CONFIG_MONGODB_SSL=false
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
+        restart: true
     networks:
       - alaska_network
+      - mongodb_network
     logging:
       driver: "json-file"
       options:
@@ -83,11 +100,18 @@ services:
     command: postgres -c ssl=on -c ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem -c ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
     networks:
       - alaska_network
+      - postgres_network
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pguser} -d ${POSTGRES_DB:-pgdatabase}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -103,9 +127,12 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+        restart: true
     networks:
       - alaska_network
+      - postgres_network
     logging:
       driver: "json-file"
       options:
@@ -123,11 +150,18 @@ services:
     restart: unless-stopped
     networks:
       - alaska_network
+      - redis_network
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispassword}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   gateway:
     build:
@@ -138,12 +172,31 @@ services:
       - "${GATEWAY_PORT:-8080}:8080"
     networks:
       - alaska_network
+      - frontend_backend_network
+    depends_on:
+      movie-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      review-service:
+        condition: service_started
     restart: unless-stopped
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   movie-service:
     build:
@@ -157,11 +210,28 @@ services:
       - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
       - OMDB_API_KEY=${OMDB_API_KEY:-KEY_GOES_HERE}
     depends_on:
-      - mongodb
-      - rabbitmq
+      mongodb:
+        condition: service_healthy
+        restart: true
+      rabbitmq:
+        condition: service_healthy
+        restart: true
     networks:
       - alaska_network
+      - mongodb_network
+      - message_broker_network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:10002/movies/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   user-service:
     build:
@@ -178,12 +248,32 @@ services:
       - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID:-DISCORD_ID_HERE}
       - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET:-SECRET_HERE}
     depends_on:
-      - postgres
-      - rabbitmq
-      - redis
+      postgres:
+        condition: service_healthy
+        restart: true
+      rabbitmq:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_healthy
+        restart: true
     networks:
       - alaska_network
+      - postgres_network
+      - redis_network
+      - message_broker_network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:10002/users/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   review-service:
     build:
@@ -196,11 +286,28 @@ services:
       - POSTGRES_URI=${POSTGRES_URL:-postgresql://pguser:pgpassword@postgres:5432/pgdatabase}
       - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+        restart: true
+      rabbitmq:
+        condition: service_healthy
+        restart: true
     networks:
       - alaska_network
+      - postgres_network
+      - message_broker_network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:10002/reviews/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:
@@ -208,21 +315,42 @@ services:
       dockerfile: Dockerfile
     container_name: frontend
     ports:
-      - "8080:80"
+      - "8081:80"
     depends_on:
-      - movie-service
-      - user-service
+      gateway:
+        condition: service_started
+        restart: true
     networks:
       - alaska_network
+      - frontend_backend_network
     restart: unless-stopped
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.30'
+          memory: 256M
 
 networks:
   alaska_network:
+    driver: bridge
+  message_broker_network:
+    driver: bridge
+    internal: true
+  mongodb_network:
+    driver: bridge
+    internal: true
+  postgres_network:
+    driver: bridge
+    internal: true
+  redis_network:
+    driver: bridge
+    internal: true
+  frontend_backend_network:
     driver: bridge
 
 volumes:

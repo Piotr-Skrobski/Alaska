@@ -12,8 +12,8 @@ COPY ./review-service/. ./
 RUN go build -o review-service ./cmd/app
 
 # Run
-FROM gcr.io/distroless/static:nonroot
+FROM alpine:latest
 WORKDIR /
 COPY --from=builder /app/review-service .
-USER nonroot:nonroot
+RUN apk add --no-cache curl
 ENTRYPOINT ["/review-service"]

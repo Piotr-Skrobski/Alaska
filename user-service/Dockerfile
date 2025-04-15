@@ -12,8 +12,8 @@ COPY ./user-service/. ./
 RUN go build -o user-service ./cmd/app
 
 # Run
-FROM gcr.io/distroless/static:nonroot
+FROM alpine:latest
 WORKDIR /
 COPY --from=builder /app/user-service .
-USER nonroot:nonroot
+RUN apk add --no-cache curl
 ENTRYPOINT ["/user-service"]

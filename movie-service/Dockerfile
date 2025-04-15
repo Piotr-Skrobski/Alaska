@@ -12,8 +12,8 @@ COPY ./movie-service/. ./
 RUN go build -o movie-service ./cmd/app
 
 # Run
-FROM gcr.io/distroless/static:nonroot
+FROM alpine:latest
 WORKDIR /
 COPY --from=builder /app/movie-service .
-USER nonroot:nonroot
+RUN apk add --no-cache curl
 ENTRYPOINT ["/movie-service"]
