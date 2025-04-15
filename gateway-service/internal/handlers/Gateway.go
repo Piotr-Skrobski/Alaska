@@ -8,7 +8,7 @@ import (
 )
 
 func MountProxies(r chi.Router) {
-	userServiceURL, _ := url.Parse("http://user-service:10003")
+	userServiceURL, _ := url.Parse("http://user-service:10002")
 	userProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
 	r.Mount("/users", userProxy)
 
@@ -16,7 +16,7 @@ func MountProxies(r chi.Router) {
 	movieProxy := httputil.NewSingleHostReverseProxy(movieServiceURL)
 	r.Mount("/movies", movieProxy)
 
-	reviewServiceURL, _ := url.Parse("http://review-service:10004")
+	reviewServiceURL, _ := url.Parse("http://review-service:10002")
 	reviewProxy := httputil.NewSingleHostReverseProxy(reviewServiceURL)
 	r.Mount("/reviews", reviewProxy)
 }
