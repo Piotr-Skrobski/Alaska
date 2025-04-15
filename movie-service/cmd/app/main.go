@@ -58,7 +58,11 @@ func main() {
 	movieService := services.NewMovieService(movieRepository, omdbService)
 
 	movieController := controllers.NewMovieController(movieService)
+	// TODO: Refactor later
 	r := router.NewRouter(movieController, middleware.Logger)
+
+	healthController := controllers.NewHealthController()
+	healthController.RegisterRoutes(r)
 
 	mqConn, err := amqp.Dial(cfg.RabbitURI)
 	if err != nil {

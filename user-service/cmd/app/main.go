@@ -59,6 +59,10 @@ func main() {
 
 	r := router.NewRouter(userController)
 
+	// TODO: Refactor later
+	healthController := controllers.NewHealthController()
+	healthController.RegisterRoutes(r)
+
 	addr := ":" + cfg.Port
 	log.Printf("🚀 Starting server on %s...", addr)
 	if err := http.ListenAndServe(addr, r); err != nil {

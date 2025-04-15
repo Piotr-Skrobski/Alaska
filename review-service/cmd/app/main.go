@@ -38,6 +38,10 @@ func main() {
 
 	r := router.NewRouter(reviewController)
 
+	// TODO: Refactor later
+	healthController := controllers.NewHealthController()
+	healthController.RegisterRoutes(r)
+
 	addr := ":" + cfg.Port
 	log.Printf("🚀 Starting review service on %s...", addr)
 	if err := http.ListenAndServe(addr, r); err != nil {
