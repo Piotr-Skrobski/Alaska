@@ -46,7 +46,7 @@ func (r *UserRepository) CreateUser(user *models.User) error {
 	return nil
 }
 
-func (r *UserRepository) SoftDeleteUser(id int64) error {
+func (r *UserRepository) SoftDeleteUser(id int) error {
 	query := `UPDATE users SET deleted_at = $1, updated_at = $1 WHERE id = $2`
 	now := time.Now()
 

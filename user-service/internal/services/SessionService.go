@@ -65,28 +65,26 @@ func (s *SessionService) GetSession(ctx context.Context, token string) (*dtos.Se
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
-
 	if len(sessionData) == 0 {
 		return nil, fmt.Errorf("session not found")
 	}
 
-	createdAt, err := time.Parse(time.RFC3339, sessionData["created_at"])
+	userID := sessionData["user_id"]
+
+	createdAtUnix, err := s.redisClient.TTL(ctx, "session:"+token).Result()
 	if err != nil {
-		return nil, fmt.Errorf("invalid created_at format: %w", err)
+		return nil, fmt.Errorf("failed to get session TTL: %w", err)
 	}
 
-	expiresAt, err := time.Parse(time.RFC3339, sessionData["expires_at"])
-	if err != nil {
-		return nil, fmt.Errorf("invalid expires_at format: %w", err)
-	}
+	now := time.Now()
+	expiresAt := now.Add(createdAtUnix)
 
 	session := &dtos.Session{
-		Token:     sessionData["token"],
-		UserID:    sessionData["user_id"],
-		CreatedAt: createdAt,
+		Token:     token,
+		UserID:    userID,
+		CreatedAt: now.Add(-s.sessionTTL).Add(createdAtUnix),
 		ExpiresAt: expiresAt,
 	}
-
 	return session, nil
 }
 

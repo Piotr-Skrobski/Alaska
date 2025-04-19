@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Piotr-Skrobski/Alaska/shared-events/events"
 	"github.com/Piotr-Skrobski/Alaska/user-service/internal/dtos"
 	"github.com/Piotr-Skrobski/Alaska/user-service/internal/models"
 	"github.com/Piotr-Skrobski/Alaska/user-service/internal/repositories"
@@ -12,12 +13,14 @@ import (
 type UserService struct {
 	UserRepo       *repositories.UserRepository
 	SessionService *SessionService
+	EventPublisher *EventPublisher
 }
 
-func NewUserService(userRepo *repositories.UserRepository, sessionService *SessionService) *UserService {
+func NewUserService(userRepo *repositories.UserRepository, sessionService *SessionService, eventPublisher *EventPublisher) *UserService {
 	return &UserService{
 		UserRepo:       userRepo,
 		SessionService: sessionService,
+		EventPublisher: eventPublisher,
 	}
 }
 
@@ -28,6 +31,19 @@ func (us *UserService) Register(ctx context.Context, req dtos.RegisterRequest) e
 		Username: req.Username,
 	}
 	return us.UserRepo.CreateUser(user)
+}
+
+func (us *UserService) Delete(ctx context.Context, userID int) error {
+	err := us.UserRepo.SoftDeleteUser(userID)
+	if err != nil {
+		return err
+	}
+
+	event := events.UserDeleted{
+		UserID: userID,
+	}
+
+	return us.EventPublisher.PublishUserDeleted(event)
 }
 
 func (us *UserService) Login(ctx context.Context, req dtos.LoginRequest) (*dtos.AuthResponse, error) {

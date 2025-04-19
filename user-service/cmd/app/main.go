@@ -25,6 +25,12 @@ func main() {
 	}
 	defer mqConn.Close()
 	log.Println("✅ Connected to RabbitMQ")
+	channel, err := mqConn.Channel()
+	if err != nil {
+		panic(err)
+	}
+	defer channel.Close()
+	utils.SetUpQueue(channel)
 
 	postgresDb, err := sql.Open("postgres", cfg.PostgresURI)
 	if err != nil {
@@ -55,7 +61,8 @@ func main() {
 
 	userRepo := repositories.NewUserRepository(postgresDb)
 	sessionService := services.NewSessionService(redisClient)
-	userService := services.NewUserService(userRepo, sessionService)
+	eventPublisher := services.NewEventPublisher(channel)
+	userService := services.NewUserService(userRepo, sessionService, eventPublisher)
 	userController := controllers.NewUserController(userService)
 
 	r := router.NewRouter(userController)

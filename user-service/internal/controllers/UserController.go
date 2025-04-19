@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/Piotr-Skrobski/Alaska/user-service/internal/dtos"
 	"github.com/Piotr-Skrobski/Alaska/user-service/internal/services"
@@ -26,6 +27,7 @@ func (uc *UserController) RegisterRoutes(r chi.Router) {
 		r.Use(uc.AuthMiddleware)
 		r.Get("/users/me", uc.Me)
 		r.Post("/users/logout", uc.Logout)
+		r.Post("/users/delete", uc.Delete)
 	})
 }
 
@@ -90,6 +92,35 @@ func (uc *UserController) Logout(w http.ResponseWriter, r *http.Request) {
 	uc.UserService.Logout(r.Context(), cookie.Value)
 	uc.UserService.SessionService.ClearSessionCookie(w)
 
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (uc *UserController) Delete(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("session_token")
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	session, err := uc.UserService.GetSession(r.Context(), cookie.Value)
+	if err != nil {
+		http.Error(w, "invalid session", http.StatusUnauthorized)
+		return
+	}
+
+	userID, parseErr := strconv.Atoi(session.UserID)
+	if parseErr != nil {
+		http.Error(w, "invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	err = uc.UserService.Delete(r.Context(), userID)
+	if err != nil {
+		http.Error(w, "failed to delete user: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	uc.UserService.SessionService.ClearSessionCookie(w)
 	w.WriteHeader(http.StatusNoContent)
 }
 
