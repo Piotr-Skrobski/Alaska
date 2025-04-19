@@ -4,11 +4,11 @@ ENV CGO_ENABLED=0 \
   GOOS=linux \
   GOARCH=amd64
 WORKDIR /app
-COPY ./user-service/go.mod ./go.mod
-COPY ./user-service/go.sum ./go.sum
-COPY ./shared-events ./shared-events
-RUN go mod download
-COPY ./user-service/. ./
+
+COPY shared-events /app/shared-events
+WORKDIR /
+COPY user-service/ /app/user-service/
+WORKDIR /app/user-service
 RUN go build -o user-service ./cmd/app
 
 # Run

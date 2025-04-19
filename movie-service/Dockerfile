@@ -4,13 +4,11 @@ ENV CGO_ENABLED=0 \
   GOOS=linux \
   GOARCH=amd64
 WORKDIR /app
-COPY ./movie-service/go.mod ./go.mod
-COPY ./movie-service/go.sum ./go.sum
-COPY ./shared-events ./shared-events
-RUN go mod download
-COPY ./movie-service/. ./
+COPY shared-events /app/shared-events
+WORKDIR /
+COPY movie-service/ /app/movie-service/
+WORKDIR /app/movie-service
 RUN go build -o movie-service ./cmd/app
-
 # Run
 FROM alpine:latest
 WORKDIR /

@@ -9,7 +9,7 @@ require (
 )
 
 require (
-	github.com/Piotr-Skrobski/shared-events v0.0.0
+	github.com/Piotr-Skrobski/Alaska/shared-events v0.0.0
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
@@ -22,4 +22,4 @@ require (
 	golang.org/x/text v0.22.0 // indirect
 )
 
-replace github.com/Piotr-Skrobski/shared-events => ./shared-events
+replace github.com/Piotr-Skrobski/shared-events => ../shared-events
