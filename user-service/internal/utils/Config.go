@@ -16,13 +16,13 @@ type Config struct {
 
 func LoadConfig() Config {
 	return Config{
-		PostgresURI:         getEnv("POSTGRES_URI", "postgres://user:pass@localhost:5432/dbname?sslmode=disable"),
-		RabbitURI:           getEnv("RABBITMQ_URI", "amqp://admin:password@localhost:5672/"),
-		RedisURI:            getEnv("REDIS_URI", "TODO"),
-		JWTSecret:           getEnv("JWT_SECRET", "dev-secret"),
-		DiscordClientID:     getEnv("DISCORD_CLIENT_ID", "DISCORD_ID_HERE"),
-		DiscordClientSecret: getEnv("DISCORD_CLIENT_SECRET", "SECRET_HERE"),
-		Port:                getEnv("PORT", "10002"),
+		PostgresURI:         getEnv("POSTGRES_URI", "POSTGRES_URI_NOT_SET"),
+		RabbitURI:           getEnv("RABBITMQ_URI", "RABBITMQ_URI_NOT_SET"),
+		RedisURI:            getEnv("REDIS_URI", "REDIS_URI_NOT_SET"),
+		JWTSecret:           getEnv("JWT_SECRET", "JWT_SECRET_NOT_SET"),
+		DiscordClientID:     getEnv("DISCORD_CLIENT_ID", "DISCORD_CLIENT_ID_NOT_SET"),
+		DiscordClientSecret: getEnv("DISCORD_CLIENT_SECRET", "DISCORD_CLIENT_SECRET_NOT_SET"),
+		Port:                getEnv("PORT", "PORT_NOT_SET"),
 	}
 }
 

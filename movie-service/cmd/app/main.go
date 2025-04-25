@@ -4,43 +4,20 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/Piotr-Skrobski/Alaska/movie-service/internal/controllers"
 	"github.com/Piotr-Skrobski/Alaska/movie-service/internal/repositories"
 	router "github.com/Piotr-Skrobski/Alaska/movie-service/internal/routers"
 	"github.com/Piotr-Skrobski/Alaska/movie-service/internal/services"
+	"github.com/Piotr-Skrobski/Alaska/movie-service/internal/utils"
 	"github.com/go-chi/chi/v5/middleware"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Config struct {
-	MongoURI   string
-	RabbitURI  string
-	OmdbAPIKey string
-	Port       string
-}
-
-func LoadConfig() Config {
-	return Config{
-		MongoURI:   getEnv("MONGO_URI", "TODO"),
-		RabbitURI:  getEnv("RABBITMQ_URI", "TODO"),
-		OmdbAPIKey: getEnv("OMDB_API_KEY", "TODO"),
-		Port:       getEnv("PORT", "10002"),
-	}
-}
-
-func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return fallback
-}
-
 func main() {
-	cfg := LoadConfig()
+	cfg := utils.LoadConfig()
 
 	mongoClient, err := mongo.Connect(context.Background(), options.Client().ApplyURI(cfg.MongoURI))
 	if err != nil {

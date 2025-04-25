@@ -12,9 +12,9 @@ type Config struct {
 
 func LoadConfig() Config {
 	return Config{
-		PostgresURI: getEnv("POSTGRES_URI", "postgres://user:pass@localhost:5432/dbname?sslmode=disable"),
-		RabbitURI:   getEnv("RABBITMQ_URI", "amqp://admin:password@localhost:5672/"),
-		Port:        getEnv("PORT", "10002"),
+		PostgresURI: getEnv("POSTGRES_URI", "POSTGRES_URI_NOT_SET"),
+		RabbitURI:   getEnv("RABBITMQ_URI", "RABBITMQ_URI_NOT_SET"),
+		Port:        getEnv("PORT", "PORT_NOT_SET"),
 	}
 }
 
