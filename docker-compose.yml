@@ -10,8 +10,8 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
       - rabbitmq_logs:/var/log/rabbitmq
     environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-admin}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-password}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
     restart: unless-stopped
     networks:
       - alaska_network
@@ -35,9 +35,9 @@ services:
     ports:
       - "27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-mongouser}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-mongopassword}
-      - MONGO_INITDB_DATABASE=${MONGO_DATABASE:-mydatabase}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_DATABASE}
     volumes:
       - mongodb_data:/data/db
       - ./mongo-init:/docker-entrypoint-initdb.d
@@ -64,11 +64,11 @@ services:
     ports:
       - "27018:8081"
     environment:
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_USER:-mongouser}
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_PASSWORD:-mongopassword}
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_USER}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_PASSWORD}
       - ME_CONFIG_MONGODB_SERVER=mongodb
-      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
-      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-password}
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD}
       - ME_CONFIG_SITE_SSL_ENABLED=false
       - ME_CONFIG_MONGODB_SSL=false
     depends_on:
@@ -91,9 +91,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-pguser}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pgpassword}
-      - POSTGRES_DB=${POSTGRES_DB:-pgdatabase}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d
@@ -107,7 +107,7 @@ services:
         max-size: "10m"
         max-file: "3"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pguser} -d ${POSTGRES_DB:-pgdatabase}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -120,8 +120,8 @@ services:
     ports:
       - "5433:80"
     environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@example.com}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-pgadminpassword}
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
       - PGADMIN_CONFIG_SERVER_MODE=True
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
     volumes:
@@ -146,7 +146,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     restart: unless-stopped
     networks:
       - alaska_network
@@ -157,7 +157,7 @@ services:
         max-size: "10m"
         max-file: "3"
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispassword}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -169,7 +169,7 @@ services:
       dockerfile: Dockerfile
     container_name: gateway
     ports:
-      - "${GATEWAY_PORT:-8080}:8080"
+      - "${GATEWAY_PORT}:8080"
     networks:
       - alaska_network
       - frontend_backend_network
@@ -204,11 +204,12 @@ services:
       dockerfile: movie-service/Dockerfile
     container_name: movie-service
     ports:
-      - "${MOVIE_SERVICE_PORT:-10002}:10002"
+      - "${MOVIE_SERVICE_PORT}:10002"
     environment:
-      - MONGO_URI=${MONGO_URI:-mongodb://mongouser:mongopassword@mongodb:27017/mydatabase?authSource=admin}
-      - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
-      - OMDB_API_KEY=${OMDB_API_KEY:-KEY_GOES_HERE}
+      - MONGO_URI=${MONGO_URI}
+      - RABBITMQ_URI=${RABBITMQ_URI}
+      - OMDB_API_KEY=${OMDB_API_KEY}
+      - PORT=${PORT}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -239,14 +240,15 @@ services:
       dockerfile: user-service/Dockerfile
     container_name: user-service
     ports:
-      - "${USER_SERVICE_PORT:-10003}:10002"
+      - "${USER_SERVICE_PORT}:10002"
     environment:
-      - POSTGRES_URI=${POSTGRES_URL:-postgresql://pguser:pgpassword@postgres:5432/pgdatabase}
-      - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
+      - POSTGRES_URI=${POSTGRES_URL}
+      - RABBITMQ_URI=${RABBITMQ_URI}
       - JWT_SECRET=${JWT_SECRET}
-      - REDIS_URI=${REDIS_URI:-redis://:redispassword@redis:6379/0}
-      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID:-DISCORD_ID_HERE}
-      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET:-SECRET_HERE}
+      - REDIS_URI=${REDIS_URI}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - PORT=${PORT}
     depends_on:
       postgres:
         condition: service_healthy
@@ -281,10 +283,11 @@ services:
       dockerfile: review-service/Dockerfile
     container_name: review-service
     ports:
-      - "${REVIEW_SERVICE_PORT:-10004}:10002"
+      - "${REVIEW_SERVICE_PORT}:10002"
     environment:
-      - POSTGRES_URI=${POSTGRES_URL:-postgresql://pguser:pgpassword@postgres:5432/pgdatabase}
-      - RABBITMQ_URI=${RABBITMQ_URI:-amqp://admin:password@rabbitmq:5672/}
+      - POSTGRES_URI=${POSTGRES_URL}
+      - RABBITMQ_URI=${RABBITMQ_URI}
+      - PORT=${PORT}
     depends_on:
       postgres:
         condition: service_healthy
