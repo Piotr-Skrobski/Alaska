@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/Piotr-Skrobski/Alaska/review-service/internal/dtos"
 	"github.com/Piotr-Skrobski/Alaska/review-service/internal/models"
@@ -48,12 +47,7 @@ func (c *ReviewController) CreateReview(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *ReviewController) GetReviewsByMovieID(w http.ResponseWriter, r *http.Request) {
-	movieIDStr := chi.URLParam(r, "movieID")
-	movieID, err := strconv.Atoi(movieIDStr)
-	if err != nil {
-		http.Error(w, "invalid movie ID", http.StatusBadRequest)
-		return
-	}
+	movieID := chi.URLParam(r, "movieID")
 
 	reviews, err := c.ReviewService.GetReviewsByMovieID(movieID)
 	if err != nil {

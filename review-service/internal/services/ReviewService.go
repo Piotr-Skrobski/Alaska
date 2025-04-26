@@ -17,6 +17,6 @@ func (s *ReviewService) CreateReview(review *models.Review) error {
 	return s.ReviewRepo.CreateReview(review)
 }
 
-func (s *ReviewService) GetReviewsByMovieID(movieID int) ([]models.Review, error) {
+func (s *ReviewService) GetReviewsByMovieID(movieID string) ([]models.Review, error) {
 	return s.ReviewRepo.GetReviewsByMovieID(movieID)
 }

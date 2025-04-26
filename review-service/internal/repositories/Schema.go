@@ -10,7 +10,7 @@ func MigrateReviewTable(db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS reviews (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    movie_id INTEGER NOT NULL,
+    movie_id VARCHAR(30) NOT NULL,
     rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 10),
     comment TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
