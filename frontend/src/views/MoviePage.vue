@@ -57,10 +57,10 @@
     <div v-if="currentMovie" class="card mb-4">
       <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
         <h3>Reviews</h3>
-        <span class="badge bg-light text-dark">{{ reviews.length }} Reviews</span>
+        <span class="badge bg-light text-dark">{{ reviews ? reviews.length : 0 }} Reviews</span>
       </div>
       <div class="card-body">
-        <div v-if="reviews.length === 0" class="text-center py-3">
+        <div v-if="!reviews || reviews.length === 0" class="text-center py-3">
           <p class="text-muted">No reviews yet. Be the first to review!</p>
         </div>
         <div v-else class="mb-4">
@@ -92,21 +92,31 @@
             <div class="star-rating">
               <i v-for="n in 10" :key="n" class="fa-star"
                 :class="n <= newReview.rating ? 'fas text-warning' : 'far text-muted'"
-                style="cursor: pointer; font-size: 1.5rem; margin-right: 4px;" @click="newReview.rating = n">
+                style="cursor: pointer; font-size: 1.5rem; margin-right: 4px;" @click="setRating(n)">
               </i>
             </div>
+            <div class="mt-2">Selected rating: {{ newReview.rating }}/10</div>
           </div>
           <div class="mb-3">
             <label for="comment" class="form-label">Your review</label>
             <textarea class="form-control" id="comment" rows="4" v-model="newReview.comment" required
               placeholder="Share your thoughts about this movie..."></textarea>
           </div>
+
           <button type="submit" class="btn btn-primary" :disabled="submitting">
             <span v-if="submitting" class="spinner-border spinner-border-sm me-2" role="status"
               aria-hidden="true"></span>
             Submit review
           </button>
         </form>
+
+        <div class="mt-4">
+          <button class="btn btn-secondary" :disabled="llmSubmitting" @click="generateReviewFromLLM">
+            <span v-if="llmSubmitting" class="spinner-border spinner-border-sm me-2" role="status"
+              aria-hidden="true"></span>
+            Generate Review from LLM
+          </button>
+        </div>
       </div>
     </div>
 
@@ -137,7 +147,8 @@ export default {
         comment: ''
       },
       isLoggedIn: false,
-      currentUser: null
+      currentUser: null,
+      llmSubmitting: false,
     };
   },
 
@@ -151,6 +162,11 @@ export default {
   },
 
   methods: {
+    setRating(rating) {
+      this.newReview.rating = rating;
+      console.log(`Rating set to: ${rating}`);
+    },
+
     checkAuthStatus() {
       this.isLoggedIn = authService.isLoggedIn();
       if (this.isLoggedIn) {
@@ -163,6 +179,7 @@ export default {
 
       this.loading = true;
       this.error = null;
+      this.reviews = [];
 
       axios.get(`${API_URL}/movies/title/${encodeURIComponent(this.searchTitle)}`)
         .then(response => {
@@ -183,6 +200,7 @@ export default {
     fetchMovieByImdbId(imdbId) {
       this.loading = true;
       this.error = null;
+      this.reviews = [];
 
       axios.get(`${API_URL}/movies/imdb/${imdbId}`)
         .then(response => {
@@ -200,12 +218,15 @@ export default {
     },
 
     loadReviews() {
-      if (!this.currentMovie || !this.currentMovie.imdb_id) return;
+      if (!this.currentMovie || !this.currentMovie.imdb_id) {
+        this.reviews = [];
+        return;
+      }
+
       axios.get(`${API_URL}/reviews/movie/${this.currentMovie.imdb_id}`)
         .then(response => {
-          console.log(response);
-
-          this.reviews = response.data;
+          console.log('Reviews loaded:', response.data);
+          this.reviews = Array.isArray(response.data) ? response.data : [];
         })
         .catch(error => {
           console.error('Error loading reviews:', error);
@@ -244,7 +265,38 @@ export default {
         .finally(() => {
           this.submitting = false;
         });
-    }
+    },
+
+    generateReviewFromLLM() {
+      if (!this.isLoggedIn || !this.currentMovie) return;
+
+      this.llmSubmitting = true;
+
+      const prompt = `Write a short, ${this.newReview.rating}/10, review for movie ${this.currentMovie.title}.`;
+
+      const requestData = {
+        model: "tinyllama",
+        prompt: prompt,
+        stream: false
+      };
+
+      axios.post('http://localhost:11434/api/generate', requestData, {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+        .then((response) => {
+          const reviewText = response.data.response;
+          this.newReview.comment = reviewText;
+        })
+        .catch((error) => {
+          console.error('Error generating review:', error);
+          alert('Error generating review from LLM');
+        })
+        .finally(() => {
+          this.llmSubmitting = false;
+        });
+    },
   }
 };
 </script>
