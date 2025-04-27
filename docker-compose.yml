@@ -338,6 +338,19 @@ services:
           cpus: '0.30'
           memory: 256M
 
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./ollama-entrypoint.sh:/ollama-entrypoint.sh
+    restart: unless-stopped
+    entrypoint: ["/usr/bin/bash", "/ollama-entrypoint.sh"]
+    networks:
+      - alaska_network
+
 networks:
   alaska_network:
     driver: bridge
@@ -363,3 +376,4 @@ volumes:
   postgres_data:
   pgadmin_data:
   redis_data:
+  ollama_data:
