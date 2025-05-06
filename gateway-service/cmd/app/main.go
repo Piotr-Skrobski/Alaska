@@ -13,7 +13,7 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:8081"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		AllowCredentials: true,
@@ -27,5 +27,5 @@ func main() {
 	handlers.MountProxies(r)
 
 	log.Println("🚀 Gateway running on :8080")
-	http.ListenAndServe(":8080", r)
+	http.ListenAndServe("0.0.0.0:8080", r)
 }
