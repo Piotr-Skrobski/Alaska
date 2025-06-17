@@ -275,12 +275,12 @@ export default {
       const prompt = `Write a short, ${this.newReview.rating}/10, review for movie ${this.currentMovie.title}.`;
 
       const requestData = {
-        model: "tinyllama",
+        model: "llama3",
         prompt: prompt,
         stream: false
       };
 
-      axios.post('http://localhost:11434/api/generate', requestData, {
+      axios.post('/ollama/api/generate', requestData, {
         headers: {
           "Content-Type": "application/json"
         }
