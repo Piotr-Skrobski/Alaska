@@ -19,7 +19,7 @@
             <router-link class="nav-link" to="/movies">Movies</router-link>
           </li>
 
-          <template v-if="!isLoggedIn">
+          <template v-if="!authStore.isLoggedIn">
             <li class="nav-item">
               <router-link class="nav-link" to="/login">Log In</router-link>
             </li>
@@ -33,15 +33,14 @@
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" role="button"
                 @click.prevent="isDropdownOpen = !isDropdownOpen" aria-expanded="false">
-                {{ username }}
+                {{ authStore.username }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end" :class="{ 'show': isDropdownOpen }">
                 <li><router-link class="dropdown-item" to="/profile">My Profile</router-link></li>
-                <li><router-link class="dropdown-item" to="/my-reviews">My Reviews</router-link></li>
                 <li>
                   <hr class="dropdown-divider">
                 </li>
-                <li><a class="dropdown-item" href="#" @click.prevent="logout">Log Out</a></li>
+                <li><a class="dropdown-item" href="#" @click.prevent="handleLogout">Log Out</a></li>
               </ul>
             </li>
           </template>
@@ -51,57 +50,48 @@
   </nav>
 </template>
 
-<script>
-import auth from '@/services/auth'
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
-export default {
-  name: 'AppHeader',
-  data() {
-    return {
-      isMobileMenuOpen: false,
-      isDropdownOpen: false
-    }
-  },
-  computed: {
-    isLoggedIn() {
-      return auth.isLoggedIn()
-    },
-    username() {
-      const user = auth.getUser()
-      return user ? user.username || 'User' : 'User'
-    }
-  },
-  methods: {
-    async logout() {
-      try {
-        await auth.logout()
-        this.isMobileMenuOpen = false
-        this.isDropdownOpen = false
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 
-        if (this.$route.path !== '/') {
-          this.$router.push('/')
-        } else {
-          this.$router.go()
-        }
-      } catch (error) {
-        console.error('Logout error:', error)
-        auth.clearUser()
-        this.$router.go()
-      }
-    },
-    handleClickOutside(event) {
-      if (this.isDropdownOpen && !event.target.closest('.dropdown')) {
-        this.isDropdownOpen = false
-      }
+const isMobileMenuOpen = ref(false)
+const isDropdownOpen = ref(false)
+
+const handleLogout = async () => {
+  try {
+    await authStore.logout()
+    isMobileMenuOpen.value = false
+    isDropdownOpen.value = false
+
+    if (route.path !== '/') {
+      router.push('/')
+    } else {
+      router.go()
     }
-  },
-  mounted() {
-    document.addEventListener('click', this.handleClickOutside)
-  },
-  beforeDestroy() {
-    document.removeEventListener('click', this.handleClickOutside)
+  } catch (error) {
+    console.error('Logout error:', error)
+    router.go()
   }
 }
+
+const handleClickOutside = (event) => {
+  if (isDropdownOpen.value && !event.target.closest('.dropdown')) {
+    isDropdownOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
