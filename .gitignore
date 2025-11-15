@@ -23,3 +23,9 @@ go.work.sum
 
 # env file
 .env
+
+# Compiled service binaries
+user-service/user-service
+movie-service/movie-service
+review-service/review-service
+gateway-service/gateway-service
