@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
