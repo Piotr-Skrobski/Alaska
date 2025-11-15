@@ -132,7 +132,7 @@ func (uc *UserController) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		_, err = uc.UserService.GetSession(context.Background(), cookie.Value)
+		_, err = uc.UserService.GetSession(r.Context(), cookie.Value)
 		if err != nil {
 			http.Error(w, "invalid session", http.StatusUnauthorized)
 			return

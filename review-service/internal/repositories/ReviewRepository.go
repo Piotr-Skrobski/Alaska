@@ -36,3 +36,15 @@ func (r *ReviewRepository) GetReviewsByMovieID(movieID string) ([]models.Review,
 	}
 	return reviews, nil
 }
+
+func (r *ReviewRepository) DeleteReviewsByUserID(userID int) error {
+	query := `DELETE FROM reviews WHERE user_id = $1`
+	_, err := r.DB.Exec(query, userID)
+	return err
+}
+
+func (r *ReviewRepository) DeleteReviewsByMovieID(movieID string) error {
+	query := `DELETE FROM reviews WHERE movie_id = $1`
+	_, err := r.DB.Exec(query, movieID)
+	return err
+}

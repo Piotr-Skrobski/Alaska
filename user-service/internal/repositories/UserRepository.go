@@ -55,8 +55,8 @@ func (r *UserRepository) SoftDeleteUser(id int) error {
 }
 
 func (r *UserRepository) GetUserByEmail(email string) (*models.User, error) {
-	query := `SELECT id, email, password, username, created_at, updated_at 
-              FROM users WHERE email = $1`
+	query := `SELECT id, email, password, username, created_at, updated_at
+              FROM users WHERE email = $1 AND deleted_at IS NULL`
 
 	user := &models.User{}
 	err := r.db.QueryRow(query, email).Scan(

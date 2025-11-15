@@ -11,6 +11,7 @@ import (
 	"github.com/Piotr-Skrobski/Alaska/review-service/internal/services"
 	"github.com/Piotr-Skrobski/Alaska/review-service/internal/utils"
 	_ "github.com/lib/pq"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
@@ -35,6 +36,26 @@ func main() {
 	reviewRepo := repositories.NewReviewRepository(postgresDb)
 	reviewService := services.NewReviewService(reviewRepo)
 	reviewController := controllers.NewReviewController(reviewService)
+
+	// Connect to RabbitMQ for event consumption
+	mqConn, err := amqp.Dial(cfg.RabbitURI)
+	if err != nil {
+		log.Fatalf("failed to connect to RabbitMQ: %v\n", err)
+	}
+	defer mqConn.Close()
+	log.Println("✅ Connected to RabbitMQ")
+
+	channel, err := mqConn.Channel()
+	if err != nil {
+		log.Fatalf("failed to open RabbitMQ channel: %v\n", err)
+	}
+	defer channel.Close()
+
+	// Start consuming events
+	eventConsumer := services.NewEventConsumer(channel, reviewService)
+	eventConsumer.ConsumeUserDeletedEvents()
+	eventConsumer.ConsumeMovieDeletedEvents()
+	log.Println("✅ Started consuming events")
 
 	r := router.NewRouter(reviewController)
 
