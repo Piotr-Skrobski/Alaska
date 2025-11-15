@@ -20,3 +20,11 @@ func (s *ReviewService) CreateReview(review *models.Review) error {
 func (s *ReviewService) GetReviewsByMovieID(movieID string) ([]models.Review, error) {
 	return s.ReviewRepo.GetReviewsByMovieID(movieID)
 }
+
+func (s *ReviewService) DeleteReviewsByUserID(userID int) error {
+	return s.ReviewRepo.DeleteReviewsByUserID(userID)
+}
+
+func (s *ReviewService) DeleteReviewsByMovieID(movieID string) error {
+	return s.ReviewRepo.DeleteReviewsByMovieID(movieID)
+}

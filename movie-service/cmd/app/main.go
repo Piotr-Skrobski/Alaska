@@ -23,6 +23,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect to MongoDB: %v\n", err)
 	}
+	defer func() {
+		if err := mongoClient.Disconnect(context.Background()); err != nil {
+			log.Printf("failed to disconnect MongoDB: %v\n", err)
+		}
+	}()
 
 	if err := mongoClient.Ping(context.Background(), nil); err != nil {
 		log.Fatalf("MongoDB ping failed: %v\n", err)

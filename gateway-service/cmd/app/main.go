@@ -27,5 +27,7 @@ func main() {
 	handlers.MountProxies(r)
 
 	log.Println("🚀 Gateway running on :8080")
-	http.ListenAndServe("0.0.0.0:8080", r)
+	if err := http.ListenAndServe("0.0.0.0:8080", r); err != nil {
+		log.Fatalf("Gateway server failed: %v\n", err)
+	}
 }
